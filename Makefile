@@ -5,7 +5,7 @@ OBJ = main.o manager.o system.o resource.o event.o
 OPT = -g -Wall -Wextra -pthread
 
 # Target executable
-TARGET = p1
+TARGET = p2
 
 # Default target to build the executable
 $(TARGET): $(OBJ)
