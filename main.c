@@ -7,6 +7,8 @@
 void load_data(Manager *manager);
 
 int main(void) {
+
+    print("hello world");
     Manager manager;
     manager_init(&manager);
     load_data(&manager);
@@ -17,7 +19,7 @@ int main(void) {
             system_run(manager.system_array.systems[i]);
         }
     }
-
+    
     manager_clean(&manager);
     return 0;
 }
