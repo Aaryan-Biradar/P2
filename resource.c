@@ -16,7 +16,13 @@
  * @param[in]  amount        Initial amount of the resource.
  * @param[in]  max_capacity  Maximum capacity of the resource.
  */
-void resource_create(Resource **resource, const char *name, int amount, int max_capacity) {}
+void resource_create(Resource **resource, const char *name, int amount, int max_capacity) {
+    *resource = (Resource *)malloc(sizeof(Resource));
+    (*resource)->name = (char *)malloc(strlen(name)+1);
+    strcpy((*resource)->name, name);
+    (*resource)->amount = amount;
+    (*resource)->max_capacity = max_capacity;    
+}
 
 /**
  * Destroys a `Resource` object.
@@ -25,7 +31,10 @@ void resource_create(Resource **resource, const char *name, int amount, int max_
  *
  * @param[in,out] resource  Pointer to the `Resource` to be destroyed.
  */
-void resource_destroy(Resource *resource) {}
+void resource_destroy(Resource *resource) {
+    free((resource)->name);
+    free(resource);
+}
 
 /* ResourceAmount functions */
 
@@ -50,7 +59,12 @@ void resource_amount_init(ResourceAmount *resource_amount, Resource *resource, i
  *
  * @param[out] array  Pointer to the `ResourceArray` to initialize.
  */
-void resource_array_init(ResourceArray *array) {}
+void resource_array_init(ResourceArray *array) {
+    array->resources = (Resource **)malloc(sizeof(Resource *));
+    array->capacity = 1;
+    array->size = 0;
+
+}
 
 /**
  * Cleans up the `ResourceArray` by destroying all resources and freeing memory.
@@ -60,7 +74,12 @@ void resource_array_init(ResourceArray *array) {}
  *
  * @param[in,out] array  Pointer to the `ResourceArray` to clean.
  */
-void resource_array_clean(ResourceArray *array) {}
+void resource_array_clean(ResourceArray *array) {
+    for(int i = 0; i < array->size; i++){
+        resource_destroy(array->resources[i]);
+    }
+    free(array->resources);
+}
 
 /**
  * Adds a `Resource` to the `ResourceArray`, resizing if necessary (doubling the size).
@@ -71,4 +90,19 @@ void resource_array_clean(ResourceArray *array) {}
  * @param[in,out] array     Pointer to the `ResourceArray`.
  * @param[in]     resource  Pointer to the `Resource` to add.
  */
-void resource_array_add(ResourceArray *array, Resource *resource) {}
+void resource_array_add(ResourceArray *array, Resource *resource) {
+    if (array->size >= array->capacity){
+        int newCapacity = (array->capacity) * 2;
+        Resource **newResource = (Resource **)malloc(sizeof(Resource *) * newCapacity);
+        for (int i = 0; i < array->size; i++){
+            newResource[i] = array->resources[i];
+        }
+        free(array->resources);
+        array->capacity = newCapacity;
+        array->resources = newResource;
+    }
+
+    array->resources[array->size] = resource;
+    array->size++;
+
+}

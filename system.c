@@ -24,7 +24,17 @@ static int system_store_resources(System *);
  * @param[in]  processing_time Processing time in milliseconds.
  * @param[in]  event_queue     Pointer to the `EventQueue` for event handling.
  */
-void system_create(System **system, const char *name, ResourceAmount consumed, ResourceAmount produced, int processing_time, EventQueue *event_queue) {}
+void system_create(System **system, const char *name, ResourceAmount consumed, ResourceAmount produced, int processing_time, EventQueue *event_queue) {
+    *system = (System *)malloc(sizeof(System));
+    (*system)->name = (char *)malloc(sizeof(name)+1);
+    strcpy((*system)->name, name);
+    (*system)->consumed = consumed;
+    (*system)->produced = produced;
+    (*system)->amount_stored = 0;
+    (*system)->processing_time = processing_time;
+    (*system)->event_queue = event_queue;
+    (*system)->status = STANDARD;
+}
 
 /**
  * Destroys a `System` object.
@@ -33,7 +43,10 @@ void system_create(System **system, const char *name, ResourceAmount consumed, R
  *
  * @param[in,out] system  Pointer to the `System` to be destroyed.
  */
-void system_destroy(System *system) {}
+void system_destroy(System *system) {
+    free((system)->name);
+    free(system);
+}
 
 
 /**
@@ -195,7 +208,11 @@ static int system_store_resources(System *system) {
  *
  * @param[out] array  Pointer to the `SystemArray` to initialize.
  */
-void system_array_init(SystemArray *array) {}
+void system_array_init(SystemArray *array) {
+    array->systems = (System **)malloc(sizeof(System *));
+    array->capacity = 1;
+    array->size = 0;
+}
 
 /**
  * Cleans up the `SystemArray` by destroying all systems and freeing memory.
@@ -204,7 +221,12 @@ void system_array_init(SystemArray *array) {}
  *
  * @param[in,out] array  Pointer to the `SystemArray` to clean.
  */
-void system_array_clean(SystemArray *array) {}
+void system_array_clean(SystemArray *array) {
+    for(int i = 0; i < array->size; i++){
+        system_destroy(array->systems[i]);
+    }
+    free(array->systems);
+}
 
 /**
  * Adds a `System` to the `SystemArray`, resizing if necessary (doubling the size).
@@ -215,4 +237,18 @@ void system_array_clean(SystemArray *array) {}
  * @param[in,out] array   Pointer to the `SystemArray`.
  * @param[in]     system  Pointer to the `System` to add.
  */
-void system_array_add(SystemArray *array, System *system) {}
+void system_array_add(SystemArray *array, System *system) {
+    if (array->size >= array->capacity) {
+        int new_capacity = array->capacity * 2;
+        System **new_systems = (System **)malloc(new_capacity * sizeof(System *));
+        for (int i = 0; i < array->size; i++) {
+            new_systems[i] = array->systems[i];
+        }
+        free(array->systems);
+        array->systems = new_systems;
+        array->capacity = new_capacity;
+    }
+
+    array->systems[array->size] = system;
+    array->size++;
+}
