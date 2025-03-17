@@ -1,8 +1,8 @@
 OBJ = main.o manager.o system.o resource.o event.o
 OPT = -fsanitize=thread -pthread -Wall -Wextra
 
-main: $(OBJ)
-	gcc $(OPT) -o main $(OBJ)
+p1: $(OBJ)
+	gcc $(OPT) -o p1 $(OBJ)
 
 main.o: main.c defs.h
 	gcc $(OPT) -c main.c
