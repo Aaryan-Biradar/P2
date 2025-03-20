@@ -252,3 +252,13 @@ void system_array_add(SystemArray *array, System *system) {
     array->systems[array->size] = system;
     array->size++;
 }
+
+void *system_thread (void *args){
+    System *system = (System *)args;
+
+    while(system->status != TERMINATE){
+        system_run(system);
+    }
+
+    return NULL;
+}

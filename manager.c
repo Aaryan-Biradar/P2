@@ -201,3 +201,12 @@ void display_simulation_state(Manager *manager) {
     fflush(stdout);
 }
 
+void *manager_thread(void *args){
+    Manager *manager = (Manager *)args;
+
+    while(manager->simulation_running){
+        manager_run(manager);
+    }
+
+    return NULL;
+}

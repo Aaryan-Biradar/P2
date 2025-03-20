@@ -11,13 +11,39 @@ int main(void) {
     Manager manager;
     manager_init(&manager);
     load_data(&manager);
+    pthread_t manager_thread_id; 
+    pthread_t system_thread_ids[manager.system_array.size];
 
-    while (manager.simulation_running) {
-        manager_run(&manager);
-        for (int i = 0; i < manager.system_array.size; ++i) {
-            system_run(manager.system_array.systems[i]);
+    if (pthread_create(&manager_thread_id, NULL, manager_thread, &manager) != 0){
+        fprintf(stderr, "failed to create manager thread :(\n");
+        return 1;
+    }
+
+    for (int i = 0; i < manager.system_array.size; ++i){
+        if (pthread_create(&system_thread_ids[i], NULL, system_thread, &manager.system_array.systems[i]) != 0){
+            fprintf(stderr, "failed to create system thread for system :(\n", i);
+            return 1;
         }
     }
+
+    if (pthread_join(manager_thread_id, NULL) != 0){
+        fprintf(stderr, "failed to join manager thread :( \n");
+        return 1;
+    }
+
+    for (int i = 0; i < manager.system_array.size; ++i){
+        if (pthread_join(&system_thread_ids[i], NULL) != 0){
+            fprintf(stderr, "failed to join system thread for system :(\n", i);
+            return 1;
+        }
+    }
+    
+    // while (manager.simulation_running) {
+    //     manager_run(&manager);
+    //     for (int i = 0; i < manager.system_array.size; ++i) {
+    //         system_run(manager.system_array.systems[i]);
+    //     }
+    // }
     
     manager_clean(&manager);
     return 0;
