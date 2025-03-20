@@ -35,6 +35,7 @@ typedef struct Resource {
     char *name;      // Dynamically allocated string
     int amount;
     int max_capacity;
+    sem_t semaphore;
 } Resource;
 
 // Represents the amount of a resource consumed/produced for a single system
@@ -52,6 +53,7 @@ typedef struct System {
     int processing_time;
     int status; 
     struct EventQueue *event_queue;  // Pointer to event queue shared by all systems and manager
+    sem_t semaphore;
 } System;
 
 // Used to send notifications to the manager about an issue / state of the system
@@ -73,6 +75,7 @@ typedef struct EventNode {
 typedef struct EventQueue {
     EventNode *head;
     int size;
+    sem_t semaphore;
 } EventQueue;
 
 // A basic dynamic array to store all of the systems in the simulation

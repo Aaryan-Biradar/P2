@@ -33,7 +33,10 @@ void event_init(Event *event, System *system, Resource *resource, int status, in
  *
  * @param[out] queue  Pointer to the `EventQueue` to initialize.
  */
-void event_queue_init(EventQueue *queue) {}
+void event_queue_init(EventQueue *queue) {
+    queue->head = NULL;
+    queue->size = 0;
+}
 
 /**
  * Cleans up the `EventQueue`.
@@ -42,7 +45,17 @@ void event_queue_init(EventQueue *queue) {}
  * 
  * @param[in,out] queue  Pointer to the `EventQueue` to clean.
  */
-void event_queue_clean(EventQueue *queue) {}
+void event_queue_clean(EventQueue *queue) {
+    EventNode *curr = queue->head;
+    EventNode *next;
+
+    while(curr != NULL){
+        next = curr->next;
+        free(curr);
+        curr = next;
+    }
+
+}
 
 /**
  * Pushes an `Event` onto the `EventQueue`.
@@ -52,7 +65,34 @@ void event_queue_clean(EventQueue *queue) {}
  * @param[in,out] queue  Pointer to the `EventQueue`.
  * @param[in]     event  Pointer to the `Event` to push onto the queue.
  */
-void event_queue_push(EventQueue *queue, const Event *event) {}
+void event_queue_push(EventQueue *queue, const Event *event) {
+    
+    EventNode *newNode = (EventNode *)malloc(sizeof(EventNode));
+    newNode->event = *event;
+    newNode->next = NULL;
+
+    if (queue->head == NULL){
+        queue->head = newNode;
+    } else {
+        EventNode *curr = queue->head;
+        EventNode *prev = NULL;
+
+        while(curr != NULL && curr->event.priority >= event->priority) {
+            prev = curr;
+            curr = curr->next;
+        }
+        if (prev == NULL){
+            newNode->next = queue->head;
+            queue->head = newNode;
+        }
+        else {
+            newNode->next = curr;
+            prev->next = newNode;        
+        }
+    }
+    queue->size++;
+}
+
 
 /**
  * Pops an `Event` from the `EventQueue`.
@@ -66,5 +106,16 @@ void event_queue_push(EventQueue *queue, const Event *event) {}
 int event_queue_pop(EventQueue *queue, Event *event) {
     // Temporarily, this only returns 0 so that it is ignored 
     // during early testing. Replace this with the correct logic.
-    return 0;
+
+    if (queue->head == NULL){
+        return 0;
+    }
+    
+    EventNode *node = queue->head;
+    *event = node->event;
+    queue->head = node->next;
+    free(node);
+    queue->size--;
+    return 1;
+
 }
