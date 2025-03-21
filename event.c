@@ -36,6 +36,7 @@ void event_init(Event *event, System *system, Resource *resource, int status, in
 void event_queue_init(EventQueue *queue) {
     queue->head = NULL;
     queue->size = 0;
+    sem_init(&(queue)->semaphore, 0, 1);
 }
 
 /**
@@ -67,6 +68,8 @@ void event_queue_clean(EventQueue *queue) {
  */
 void event_queue_push(EventQueue *queue, const Event *event) {
     
+    sem_wait(&(queue)->semaphore);
+    
     EventNode *newNode = (EventNode *)malloc(sizeof(EventNode));
     newNode->event = *event;
     newNode->next = NULL;
@@ -91,6 +94,7 @@ void event_queue_push(EventQueue *queue, const Event *event) {
         }
     }
     queue->size++;
+    sem_post(&(queue)->semaphore);
 }
 
 
@@ -106,8 +110,10 @@ void event_queue_push(EventQueue *queue, const Event *event) {
 int event_queue_pop(EventQueue *queue, Event *event) {
     // Temporarily, this only returns 0 so that it is ignored 
     // during early testing. Replace this with the correct logic.
+    sem_wait(&(queue)->semaphore);
 
     if (queue->head == NULL){
+        sem_post(&(queue)->semaphore);
         return 0;
     }
     
@@ -116,6 +122,6 @@ int event_queue_pop(EventQueue *queue, Event *event) {
     queue->head = node->next;
     free(node);
     queue->size--;
+    sem_post(&(queue)->semaphore);
     return 1;
-
 }

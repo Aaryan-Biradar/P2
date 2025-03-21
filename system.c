@@ -34,6 +34,7 @@ void system_create(System **system, const char *name, ResourceAmount consumed, R
     (*system)->processing_time = processing_time;
     (*system)->event_queue = event_queue;
     (*system)->status = STANDARD;
+    sem_init(&(*system)->semaphore, 0, 1);
 }
 
 /**
@@ -44,6 +45,7 @@ void system_create(System **system, const char *name, ResourceAmount consumed, R
  * @param[in,out] system  Pointer to the `System` to be destroyed.
  */
 void system_destroy(System *system) {
+    sem_destroy(&(system)->semaphore);
     free((system)->name);
     free(system);
 }
@@ -99,6 +101,7 @@ void system_run(System *system) {
  * @return                         `STATUS_OK` if successful, or an error status code.
  */
 static int system_convert(System *system) {
+
     int status;
     Resource *consumed_resource = system->consumed.resource;
     int amount_consumed = system->consumed.amount;
@@ -107,6 +110,7 @@ static int system_convert(System *system) {
     if (consumed_resource == NULL) {
         status = STATUS_OK;
     } else {
+        sem_wait(&consumed_resource->semaphore);
         // Attempt to consume the required resources
         if (consumed_resource->amount >= amount_consumed) {
             consumed_resource->amount -= amount_consumed;
@@ -114,6 +118,7 @@ static int system_convert(System *system) {
         } else {
             status = (consumed_resource->amount == 0) ? STATUS_EMPTY : STATUS_INSUFFICIENT;
         }
+        sem_post(&consumed_resource->semaphore);
     }
 
     if (status == STATUS_OK) {
@@ -180,6 +185,7 @@ static int system_store_resources(System *system) {
 
     amount_to_store = system->amount_stored;
 
+    sem_wait(&produced_resource->semaphore);
     // Calculate available space
     available_space = produced_resource->max_capacity - produced_resource->amount;
 
@@ -192,6 +198,7 @@ static int system_store_resources(System *system) {
         produced_resource->amount += available_space;
         system->amount_stored = amount_to_store - available_space;
     }
+    sem_post(&produced_resource->semaphore);
 
     if (system->amount_stored != 0) {
         return STATUS_CAPACITY;
