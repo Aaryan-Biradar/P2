@@ -32,9 +32,9 @@ void manager_init(Manager *manager) {
  * @param[in,out] manager  Pointer to the `Manager` to clean.
  */
 void manager_clean(Manager *manager) {
-    system_array_clean(&(manager->system_array));
-    resource_array_clean(&(manager->resource_array));
-    event_queue_clean(&(manager->event_queue));
+    system_array_clean(&manager->system_array);
+    resource_array_clean(&manager->resource_array);
+    event_queue_clean(&manager->event_queue);
 }
 
 /**
@@ -56,7 +56,6 @@ void manager_run(Manager *manager) {
     display_simulation_state(manager);
 
     // Process events if one is popped
-    
     event_found_flag = event_queue_pop(&manager->event_queue, &event);
 
     while (event_found_flag) {
@@ -84,11 +83,9 @@ void manager_run(Manager *manager) {
         if (no_oxygen_flag || distance_reached_flag) {
             status = TERMINATE;
             manager->simulation_running = 0;
-        }
-        else if (need_more_flag) {
+        } else if (need_more_flag) {
             status = FAST;
-        }
-        else if (need_less_flag) {
+        } else if (need_less_flag) {
             status = SLOW;
         }
 
@@ -104,7 +101,6 @@ void manager_run(Manager *manager) {
 
         event_found_flag = event_queue_pop(&manager->event_queue, &event);
     }
-    
 }
 
 // Don't worry much about these! These are special codes that allow us to do some formatting in the terminal
@@ -191,20 +187,28 @@ void display_simulation_state(Manager *manager) {
                 break;
         }
 
-        printf(ANSI_LN_CLR  "%-20s: %-10s\n", system->name, status_str);
+        printf(ANSI_LN_CLR "%-20s: %-10s\n", system->name, status_str);
     }
 
-    printf(ANSI_LN_CLR  "\n");
+    printf(ANSI_LN_CLR "\n");
 
     last_display_time = current_time;
     // Flush the output to ensure it appears immediately
     fflush(stdout);
 }
 
-void *manager_thread(void *args){
-    Manager *manager = (Manager *)args;
+/**
+ * Thread function for running the manager.
+ *
+ * This function is passed to pthread_create and runs the manager in a loop until the simulation is no longer running.
+ *
+ * @param[in] arg  Pointer to the `Manager` to run.
+ * @return         NULL (thread exit).
+ */
+void *manager_thread(void *arg) {
+    Manager *manager = (Manager *)arg;
 
-    while(manager->simulation_running){
+    while (manager->simulation_running) {
         manager_run(manager);
     }
 

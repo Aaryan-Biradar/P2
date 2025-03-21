@@ -36,7 +36,7 @@ void event_init(Event *event, System *system, Resource *resource, int status, in
 void event_queue_init(EventQueue *queue) {
     queue->head = NULL;
     queue->size = 0;
-    sem_init(&(queue)->semaphore, 0, 1);
+    sem_init(&queue->semaphore, 0, 1); // Initialize semaphore
 }
 
 /**
@@ -50,12 +50,13 @@ void event_queue_clean(EventQueue *queue) {
     EventNode *curr = queue->head;
     EventNode *next;
 
-    while(curr != NULL){
+    while (curr != NULL) {
         next = curr->next;
         free(curr);
         curr = next;
     }
 
+    sem_destroy(&queue->semaphore); // Destroy semaphore
 }
 
 /**
@@ -67,36 +68,35 @@ void event_queue_clean(EventQueue *queue) {
  * @param[in]     event  Pointer to the `Event` to push onto the queue.
  */
 void event_queue_push(EventQueue *queue, const Event *event) {
-    
-    sem_wait(&(queue)->semaphore);
-    
+    sem_wait(&queue->semaphore); // Lock semaphore
+
     EventNode *newNode = (EventNode *)malloc(sizeof(EventNode));
     newNode->event = *event;
     newNode->next = NULL;
 
-    if (queue->head == NULL){
+    if (queue->head == NULL) {
         queue->head = newNode;
     } else {
         EventNode *curr = queue->head;
         EventNode *prev = NULL;
 
-        while(curr != NULL && curr->event.priority >= event->priority) {
+        while (curr != NULL && curr->event.priority >= event->priority) {
             prev = curr;
             curr = curr->next;
         }
-        if (prev == NULL){
+
+        if (prev == NULL) {
             newNode->next = queue->head;
             queue->head = newNode;
-        }
-        else {
+        } else {
             newNode->next = curr;
-            prev->next = newNode;        
+            prev->next = newNode;
         }
     }
-    queue->size++;
-    sem_post(&(queue)->semaphore);
-}
 
+    queue->size++;
+    sem_post(&queue->semaphore); // Unlock semaphore
+}
 
 /**
  * Pops an `Event` from the `EventQueue`.
@@ -108,20 +108,19 @@ void event_queue_push(EventQueue *queue, const Event *event) {
  * @return               Non-zero if an event was successfully popped; zero otherwise.
  */
 int event_queue_pop(EventQueue *queue, Event *event) {
-    // Temporarily, this only returns 0 so that it is ignored 
-    // during early testing. Replace this with the correct logic.
-    sem_wait(&(queue)->semaphore);
+    sem_wait(&queue->semaphore); // Lock semaphore
 
-    if (queue->head == NULL){
-        sem_post(&(queue)->semaphore);
+    if (queue->head == NULL) {
+        sem_post(&queue->semaphore); // Unlock semaphore
         return 0;
     }
-    
+
     EventNode *node = queue->head;
     *event = node->event;
     queue->head = node->next;
     free(node);
     queue->size--;
-    sem_post(&(queue)->semaphore);
+
+    sem_post(&queue->semaphore); // Unlock semaphore
     return 1;
 }

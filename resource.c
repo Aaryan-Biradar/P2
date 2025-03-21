@@ -18,11 +18,11 @@
  */
 void resource_create(Resource **resource, const char *name, int amount, int max_capacity) {
     *resource = (Resource *)malloc(sizeof(Resource));
-    (*resource)->name = (char *)malloc(strlen(name)+1);
+    (*resource)->name = (char *)malloc(strlen(name) + 1);
     strcpy((*resource)->name, name);
     (*resource)->amount = amount;
-    (*resource)->max_capacity = max_capacity;    
-    sem_init(&(*resource)->semaphore,0,1);
+    (*resource)->max_capacity = max_capacity;
+    sem_init(&(*resource)->semaphore, 0, 1); // Initialize semaphore
 }
 
 /**
@@ -33,8 +33,8 @@ void resource_create(Resource **resource, const char *name, int amount, int max_
  * @param[in,out] resource  Pointer to the `Resource` to be destroyed.
  */
 void resource_destroy(Resource *resource) {
-    sem_destroy(&(resource)->semaphore);
-    free((resource)->name);
+    sem_destroy(&resource->semaphore); // Destroy semaphore
+    free(resource->name);
     free(resource);
 }
 
@@ -65,7 +65,6 @@ void resource_array_init(ResourceArray *array) {
     array->resources = (Resource **)malloc(sizeof(Resource *));
     array->capacity = 1;
     array->size = 0;
-
 }
 
 /**
@@ -77,7 +76,7 @@ void resource_array_init(ResourceArray *array) {
  * @param[in,out] array  Pointer to the `ResourceArray` to clean.
  */
 void resource_array_clean(ResourceArray *array) {
-    for(int i = 0; i < array->size; i++){
+    for (int i = 0; i < array->size; i++) {
         resource_destroy(array->resources[i]);
     }
     free(array->resources);
@@ -93,18 +92,17 @@ void resource_array_clean(ResourceArray *array) {
  * @param[in]     resource  Pointer to the `Resource` to add.
  */
 void resource_array_add(ResourceArray *array, Resource *resource) {
-    if (array->size >= array->capacity){
-        int newCapacity = (array->capacity) * 2;
+    if (array->size >= array->capacity) {
+        int newCapacity = array->capacity * 2;
         Resource **newResource = (Resource **)malloc(sizeof(Resource *) * newCapacity);
-        for (int i = 0; i < array->size; i++){
+        for (int i = 0; i < array->size; i++) {
             newResource[i] = array->resources[i];
         }
         free(array->resources);
-        array->capacity = newCapacity;
         array->resources = newResource;
+        array->capacity = newCapacity;
     }
 
     array->resources[array->size] = resource;
     array->size++;
-
 }

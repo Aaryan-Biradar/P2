@@ -26,7 +26,7 @@ static int system_store_resources(System *);
  */
 void system_create(System **system, const char *name, ResourceAmount consumed, ResourceAmount produced, int processing_time, EventQueue *event_queue) {
     *system = (System *)malloc(sizeof(System));
-    (*system)->name = (char *)malloc(sizeof(name)+1);
+    (*system)->name = (char *)malloc(strlen(name) + 1);
     strcpy((*system)->name, name);
     (*system)->consumed = consumed;
     (*system)->produced = produced;
@@ -34,7 +34,7 @@ void system_create(System **system, const char *name, ResourceAmount consumed, R
     (*system)->processing_time = processing_time;
     (*system)->event_queue = event_queue;
     (*system)->status = STANDARD;
-    sem_init(&(*system)->semaphore, 0, 1);
+    sem_init(&(*system)->semaphore, 0, 1); // Initialize semaphore
 }
 
 /**
@@ -45,11 +45,10 @@ void system_create(System **system, const char *name, ResourceAmount consumed, R
  * @param[in,out] system  Pointer to the `System` to be destroyed.
  */
 void system_destroy(System *system) {
-    sem_destroy(&(system)->semaphore);
-    free((system)->name);
+    sem_destroy(&system->semaphore); // Destroy semaphore
+    free(system->name);
     free(system);
 }
-
 
 /**
  * Runs the main loop for a `System`.
@@ -77,7 +76,7 @@ void system_run(System *system) {
         }
     }
 
-    if (system->amount_stored  > 0) {
+    if (system->amount_stored > 0) {
         // Attempt to store the produced resources
         result_status = system_store_resources(system);
 
@@ -101,7 +100,6 @@ void system_run(System *system) {
  * @return                         `STATUS_OK` if successful, or an error status code.
  */
 static int system_convert(System *system) {
-
     int status;
     Resource *consumed_resource = system->consumed.resource;
     int amount_consumed = system->consumed.amount;
@@ -110,7 +108,9 @@ static int system_convert(System *system) {
     if (consumed_resource == NULL) {
         status = STATUS_OK;
     } else {
+        // Lock the resource semaphore
         sem_wait(&consumed_resource->semaphore);
+
         // Attempt to consume the required resources
         if (consumed_resource->amount >= amount_consumed) {
             consumed_resource->amount -= amount_consumed;
@@ -118,6 +118,8 @@ static int system_convert(System *system) {
         } else {
             status = (consumed_resource->amount == 0) ? STATUS_EMPTY : STATUS_INSUFFICIENT;
         }
+
+        // Unlock the resource semaphore
         sem_post(&consumed_resource->semaphore);
     }
 
@@ -126,8 +128,7 @@ static int system_convert(System *system) {
 
         if (system->produced.resource != NULL) {
             system->amount_stored += system->produced.amount;
-        }
-        else {
+        } else {
             system->amount_stored = 0;
         }
     }
@@ -185,7 +186,9 @@ static int system_store_resources(System *system) {
 
     amount_to_store = system->amount_stored;
 
+    // Lock the resource semaphore
     sem_wait(&produced_resource->semaphore);
+
     // Calculate available space
     available_space = produced_resource->max_capacity - produced_resource->amount;
 
@@ -198,6 +201,8 @@ static int system_store_resources(System *system) {
         produced_resource->amount += available_space;
         system->amount_stored = amount_to_store - available_space;
     }
+
+    // Unlock the resource semaphore
     sem_post(&produced_resource->semaphore);
 
     if (system->amount_stored != 0) {
@@ -206,7 +211,6 @@ static int system_store_resources(System *system) {
 
     return STATUS_OK;
 }
-
 
 /**
  * Initializes the `SystemArray`.
@@ -229,7 +233,7 @@ void system_array_init(SystemArray *array) {
  * @param[in,out] array  Pointer to the `SystemArray` to clean.
  */
 void system_array_clean(SystemArray *array) {
-    for(int i = 0; i < array->size; i++){
+    for (int i = 0; i < array->size; i++) {
         system_destroy(array->systems[i]);
     }
     free(array->systems);
@@ -260,10 +264,18 @@ void system_array_add(SystemArray *array, System *system) {
     array->size++;
 }
 
-void *system_thread (void *args){
-    System *system = (System *)args;
+/**
+ * Thread function for running a system.
+ *
+ * This function is passed to pthread_create and runs the system in a loop until the system is terminated.
+ *
+ * @param[in] arg  Pointer to the `System` to run.
+ * @return         NULL (thread exit).
+ */
+void *system_thread(void *arg) {
+    System *system = (System *)arg;
 
-    while(system->status != TERMINATE){
+    while (system->status != TERMINATE) {
         system_run(system);
     }
 
