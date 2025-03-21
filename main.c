@@ -21,7 +21,7 @@ int main(void) {
 
     for (int i = 0; i < manager.system_array.size; ++i){
         if (pthread_create(&system_thread_ids[i], NULL, system_thread, &manager.system_array.systems[i]) != 0){
-            fprintf(stderr, "failed to create system thread for system :(\n", i);
+            fprintf(stderr, "failed to create system thread for system :(\n");
             return 1;
         }
     }
@@ -32,8 +32,8 @@ int main(void) {
     }
 
     for (int i = 0; i < manager.system_array.size; ++i){
-        if (pthread_join(&system_thread_ids[i], NULL) != 0){
-            fprintf(stderr, "failed to join system thread for system :(\n", i);
+        if (pthread_join(system_thread_ids[i], NULL) != 0){
+            fprintf(stderr, "failed to join system thread for system :(\n");
             return 1;
         }
     }

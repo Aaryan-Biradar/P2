@@ -33,7 +33,7 @@ void resource_create(Resource **resource, const char *name, int amount, int max_
  * @param[in,out] resource  Pointer to the `Resource` to be destroyed.
  */
 void resource_destroy(Resource *resource) {
-    sem_destroy(&(*resource)->semaphore);
+    sem_destroy(&(resource)->semaphore);
     free((resource)->name);
     free(resource);
 }
