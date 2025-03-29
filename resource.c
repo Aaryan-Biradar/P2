@@ -18,10 +18,13 @@
  */
 void resource_create(Resource **resource, const char *name, int amount, int max_capacity) {
     *resource = (Resource *)malloc(sizeof(Resource));
+
     (*resource)->name = (char *)malloc(strlen(name) + 1);
     strcpy((*resource)->name, name);
+
     (*resource)->amount = amount;
     (*resource)->max_capacity = max_capacity;
+
     sem_init(&(*resource)->semaphore, 0, 1); // Initialize semaphore
 }
 
@@ -79,6 +82,7 @@ void resource_array_clean(ResourceArray *array) {
     for (int i = 0; i < array->size; i++) {
         resource_destroy(array->resources[i]);
     }
+
     free(array->resources);
 }
 
@@ -92,17 +96,24 @@ void resource_array_clean(ResourceArray *array) {
  * @param[in]     resource  Pointer to the `Resource` to add.
  */
 void resource_array_add(ResourceArray *array, Resource *resource) {
+    // Resize array if capacity is reached
     if (array->size >= array->capacity) {
+        // Double the capacity
         int newCapacity = array->capacity * 2;
         Resource **newResource = (Resource **)malloc(sizeof(Resource *) * newCapacity);
+
+        // Copy existing resources to new array
         for (int i = 0; i < array->size; i++) {
             newResource[i] = array->resources[i];
         }
+
+        // Replace old array with new one
         free(array->resources);
         array->resources = newResource;
         array->capacity = newCapacity;
     }
 
+    // Add new resource and increment size
     array->resources[array->size] = resource;
     array->size++;
 }
