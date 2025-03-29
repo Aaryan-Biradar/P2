@@ -17,6 +17,7 @@
  * @param[in]  amount    Amount related to the event (e.g., resource amount).
  */
 void event_init(Event *event, System *system, Resource *resource, int status, int priority, int amount) {
+    //Initialize all the data
     event->system = system;
     event->resource = resource;
     event->status = status;
@@ -51,12 +52,12 @@ void event_queue_clean(EventQueue *queue) {
     EventNode *next;
 
     while (curr != NULL) {
-        next = curr->next;
-        free(curr);
-        curr = next;
+        next = curr->next;  // Save next pointer before freeing
+        free(curr);         // Free current node
+        curr = next;        // Move to next node
     }
 
-    sem_destroy(&queue->semaphore); // Destroy semaphore
+    sem_destroy(&queue->semaphore);  // Clean up semaphore
 }
 
 /**
@@ -68,34 +69,35 @@ void event_queue_clean(EventQueue *queue) {
  * @param[in]     event  Pointer to the `Event` to push onto the queue.
  */
 void event_queue_push(EventQueue *queue, const Event *event) {
-    sem_wait(&queue->semaphore); // Lock semaphore
+    sem_wait(&queue->semaphore);  //Lock thread
 
     EventNode *newNode = (EventNode *)malloc(sizeof(EventNode));
     newNode->event = *event;
     newNode->next = NULL;
 
     if (queue->head == NULL) {
-        queue->head = newNode;
+        queue->head = newNode; //Empty queue case
     } else {
+
+        // Find insertion point based on event priority (higher priority first)
         EventNode *curr = queue->head;
         EventNode *prev = NULL;
-
         while (curr != NULL && curr->event.priority >= event->priority) {
             prev = curr;
             curr = curr->next;
         }
 
-        if (prev == NULL) {
+        if (prev == NULL) {  // Insert at head 
             newNode->next = queue->head;
             queue->head = newNode;
-        } else {
+        } else {  // Insert in middle or tail
             newNode->next = curr;
             prev->next = newNode;
         }
     }
 
-    queue->size++;
-    sem_post(&queue->semaphore); // Unlock semaphore
+    queue->size++;  // Maintain size counter
+    sem_post(&queue->semaphore);  // Release lock
 }
 
 /**
@@ -110,17 +112,20 @@ void event_queue_push(EventQueue *queue, const Event *event) {
 int event_queue_pop(EventQueue *queue, Event *event) {
     sem_wait(&queue->semaphore); // Lock semaphore
 
+    
     if (queue->head == NULL) {
-        sem_post(&queue->semaphore); // Unlock semaphore
-        return 0;
+        sem_post(&queue->semaphore);
+        return 0; // Return false if queue is empty
     }
 
+    // Remove and return head
     EventNode *node = queue->head;
-    *event = node->event;
-    queue->head = node->next;
-    free(node);
-    queue->size--;
+    *event = node->event;          // Copy event data to output
+    queue->head = node->next;      // Update head pointer
+    
+    free(node);          
+    queue->size--;                
 
-    sem_post(&queue->semaphore); // Unlock semaphore
-    return 1;
+    sem_post(&queue->semaphore);
+    return 1;  // Return success
 }
