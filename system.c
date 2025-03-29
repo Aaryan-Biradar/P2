@@ -277,11 +277,12 @@ void system_array_add(SystemArray *array, System *system) {
  * @return         NULL (thread exit).
  */
 void *system_thread(void *arg) {
+    // Cast argument to system context
     System *system = (System *)arg;
 
     while (system->status != TERMINATE) {
-        system_run(system);
+        system_run(system);  // Execute one system cycle
     }
 
-    return NULL;
+    return NULL;  // Thread exit
 }

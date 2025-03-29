@@ -206,11 +206,12 @@ void display_simulation_state(Manager *manager) {
  * @return         NULL (thread exit).
  */
 void *manager_thread(void *arg) {
+    // Cast thread argument to Manager context
     Manager *manager = (Manager *)arg;
 
     while (manager->simulation_running) {
-        manager_run(manager);
+        manager_run(manager);  // Execute manager's cycle
     }
 
-    return NULL;
+    return NULL;  // Thread termination
 }
