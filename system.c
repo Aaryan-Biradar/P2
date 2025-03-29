@@ -25,8 +25,11 @@ static int system_store_resources(System *);
  * @param[in]  event_queue     Pointer to the `EventQueue` for event handling.
  */
 void system_create(System **system, const char *name, ResourceAmount consumed, ResourceAmount produced, int processing_time, EventQueue *event_queue) {
+    //Allocate memory
     *system = (System *)malloc(sizeof(System));
     (*system)->name = (char *)malloc(strlen(name) + 1);
+
+    //Initialize all the data
     strcpy((*system)->name, name);
     (*system)->consumed = consumed;
     (*system)->produced = produced;
@@ -34,6 +37,7 @@ void system_create(System **system, const char *name, ResourceAmount consumed, R
     (*system)->processing_time = processing_time;
     (*system)->event_queue = event_queue;
     (*system)->status = STANDARD;
+
     sem_init(&(*system)->semaphore, 0, 1); // Initialize semaphore
 }
 

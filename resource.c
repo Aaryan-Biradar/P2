@@ -17,11 +17,13 @@
  * @param[in]  max_capacity  Maximum capacity of the resource.
  */
 void resource_create(Resource **resource, const char *name, int amount, int max_capacity) {
+    
+    //Allocate memory
     *resource = (Resource *)malloc(sizeof(Resource));
-
     (*resource)->name = (char *)malloc(strlen(name) + 1);
-    strcpy((*resource)->name, name);
 
+    //Initialize all the data
+    strcpy((*resource)->name, name);
     (*resource)->amount = amount;
     (*resource)->max_capacity = max_capacity;
 
